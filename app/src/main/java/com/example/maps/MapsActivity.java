@@ -1,8 +1,14 @@
 package com.example.maps;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
 
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -16,11 +22,32 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
+import java.util.List;
+
 import static com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.normal : mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL); break;
+        case R.id.terrain: mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);break;
+        case R.id.sattelite: mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);break;
+        case R.id.hibryd: mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);break;
+        case R.id.none:mMap.setMapType(GoogleMap.MAP_TYPE_NONE);break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +59,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         Button go = (Button) findViewById(R.id.idGo);
         go.setOnClickListener(op);
+        Button cari = (Button) findViewById(R.id.idCari);
+        cari.setOnClickListener(op);
+
     }
 
 
@@ -61,11 +91,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             switch (view.getId()){
                 case R.id.idGo:sembunyikanKeyboard(view);
                     gotoLokasi();break;
+                case R.id.idCari:
+                goCari();break;
 
 
             }
         }
     };
+
 
 
 
@@ -94,4 +127,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.
                 newLatLngZoom(Lokasibaru, z));
     }
+    private void goCari(){
+        EditText lat = (EditText) findViewById(R.id.idLokasiLat);
+        EditText lng = (EditText) findViewById(R.id.idLokasiLng);
+        Double dbllat = Double.parseDouble(lat.getText().toString());
+        Double dbllng = Double.parseDouble(lng.getText().toString());
+        Object lintang;
+        Object bujur;
+        hitungJarak(dbllat,dbllng,lintang,bujur);
+
+        EditText tempat = (EditText) findViewById(R.id.idDaerah);
+        Geocoder g = new Geocoder(getBaseContext());
+        try{
+            List<android.location.Address> daftar = g.getFromLocationName(tempat.getText().toString(),1);
+            Address alamat = daftar.get(0);
+
+            String nemuAlamat = alamat.getAddressLine(0);
+            Double lintang = alamat.getLatitude();
+            Double bujur = alamat.getLongitude();
+            Toast.makeText(getBaseContext(),"Ketemu" + nemuAlamat, Toast.LENGTH_LONG).show();
+
+            EditText zoom = (EditText) findViewById(R.id.idLokasiZoom);
+            Float dblzoom = Float.parseFloat(zoom.getText().toString());
+            Toast.makeText(this,"Move to"+ nemuAlamat +"Lat:" +lintang +"Long:" +bujur, Toast.LENGTH_LONG).show();
+gotoPeta( lintang, bujur, dblzoom);
+EditText lat = (EditText) findViewById(R.id.idLokasiLat);
+            EditText lng = (EditText) findViewById(R.id.idLokasiLng);
+
+            lat.setText(lintang.toString());
+            lng.setText(bujur.toString());
+
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+    }
+
 }
